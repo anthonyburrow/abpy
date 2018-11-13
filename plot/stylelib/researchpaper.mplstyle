@@ -1,0 +1,31 @@
+figure.figsize       : 12, 9
+figure.autolayout    : True
+
+legend.fontsize      : 28
+
+axes.titlesize      : 38
+axes.labelsize      : 36
+
+xtick.direction      : in
+xtick.major.size     : 12
+xtick.minor.size     : 8
+xtick.major.width    : 4
+xtick.minor.width    : 3
+xtick.major.pad      : 6
+xtick.top            : True
+xtick.major.top      : True
+xtick.minor.top      : True
+xtick.labelsize      : 30
+
+ytick.direction      : in
+ytick.major.size     : 12
+ytick.minor.size     : 8
+ytick.major.width    : 4
+ytick.minor.width    : 3
+ytick.major.pad      : 6
+ytick.labelsize      : 30
+ytick.right          : True
+ytick.major.right    : True
+ytick.minor.right    : True
+
+scatter.marker : o
