@@ -32,3 +32,19 @@ def Combination(n, k):
         return 0
 
     return int(Factorial(n) / (Factorial(k) * Factorial(n - k)))
+
+
+def Gamma(n):
+    if isinstance(n, int):
+        return Factorial(n - 1)
+    # elif not isinstance(n, int) and n > 0:
+
+
+def lGamma(n):
+    from math import log, pi
+
+    if n <= 13:
+        return log(Gamma(n))
+    else:
+        lg = (n - 0.5) * log(n) - n + 0.5 * log(2 * pi)
+        return lg
