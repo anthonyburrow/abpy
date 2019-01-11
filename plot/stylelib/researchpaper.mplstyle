@@ -1,7 +1,7 @@
 figure.figsize       : 12, 9
 figure.autolayout    : True
 
-legend.fontsize      : 28
+legend.fontsize      : 24
 
 axes.titlesize      : 38
 axes.labelsize      : 36
