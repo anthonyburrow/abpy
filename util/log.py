@@ -7,7 +7,9 @@ def makelog(name=None, log_path='./log/'):
         os.makedirs(log_path)
 
     if name is None:
-        name = '%smy.log' % log_path
+        name = '%smy' % log_path
+
+    name += '.log'
 
     # Root logger
     logging.basicConfig(format='')
