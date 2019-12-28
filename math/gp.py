@@ -5,7 +5,7 @@ import time
 
 def regression(x, y, y_err=None, x_pred=None, optimize_noise=False, ls=300,
                var=0.001, noise=0.01, verbose=True):
-    """Calculates GPy model for given data.
+    """Calculate GPy model for given data.
 
     Uses GPy to determine a Gaussian process model (Matern32 kernel) based on given
     training data and optimized hyperparameters.  Returns mean and variance

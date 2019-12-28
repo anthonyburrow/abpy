@@ -2,22 +2,12 @@ import numpy as np
 from scipy.optimize import curve_fit
 
 
-def Gauss(x, mu, sigma, A):
+def gauss(x, mu, sigma, A):
     return A * np.exp(-(x - mu)**2 / 2 / sigma**2)
 
 
 def bimodal(x, mu1, sigma1, A1, mu2, sigma2, A2):
-    return Gauss(x, mu1, sigma1, A1) + Gauss(x, mu2, sigma2, A2)
-
-
-def Gauss2D(data, mux, muy, sigx, sigy, A, ravel=True):
-    x, y = data
-    argx = ((x - mux) / sigx)**2
-    argy = ((y - muy) / sigy)**2
-    g = A * np.exp(-0.5 * (argx + argy))
-    if ravel:
-        g = g.ravel()
-    return g
+    return gauss(x, mu1, sigma1, A1) + gauss(x, mu2, sigma2, A2)
 
 
 def hist_fit(x_arr, p0=[0, 0.5], hist_bins=10, hist_range=None,
@@ -28,7 +18,7 @@ def hist_fit(x_arr, p0=[0, 0.5], hist_bins=10, hist_range=None,
 
     p0 = p0 + [h.max()]
 
-    params, cov = curve_fit(Gauss, x, h, p0=p0, bounds=fit_bounds)
+    params, cov = curve_fit(gauss, x, h, p0=p0, bounds=fit_bounds)
 
     return params
 

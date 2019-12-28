@@ -19,7 +19,8 @@ def draw_contours(
         cov = gmm.covariances_[i]
         gauss = MultiGauss(mu, cov)
 
-        z_con = gauss.proj_pdf((con0, con1), which=which, ravel=False)
+        con_in = np.array((con0, con1)).T
+        z_con = gauss.proj_pdf(con_in, which=which, ravel=False)
 
         sig = 1 / np.sqrt(gauss.cov_inv[which[0], which[0]])
         sig_point = mu.copy()
