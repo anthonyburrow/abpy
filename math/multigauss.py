@@ -3,11 +3,7 @@ from itertools import product, repeat
 
 
 class MultiGauss:
-    """Generalized multivariate Gaussian object.
-    Data has m dimensions with n data points
-    Read in data X in the form of (x1, x2, ...), where x1, x2, ... are (n,) arrays.
-    Mu is an (m,) array
-    """
+    """Generalized multivariate Gaussian object."""
 
     def __init__(self, mu, cov, cov_inv=None, cov_det=None):
         """Setup distribution.
@@ -56,21 +52,22 @@ class MultiGauss:
         if len(X.shape) == 1:
             assert X.shape[0] == self.m, \
                 '`X` data point must be of dimension %i' % self.m
-            return self._gauss(X, normalize=normalize)
+            return self._gauss_single(X, normalize=normalize)
 
         n = X.shape[0]
 
         # Get Gaussian output for each point
         g = np.zeros(n)
         for i, x in enumerate(X):
-            g[i] = self._gauss(x, normalize)
+            g[i] = self._gauss_single(x, normalize)
 
         return g
 
     def pdf_outer(self, X, normalize=True, ravel=False):
         """Calculate PDF of every combination of given points.
 
-        Function takes a set of n points and
+        Function takes a set of n points and outputs the PDF of the m-dimensional
+        Gaussian distribution for the tensor product of X on itself.
 
         Args:
             X (numpy.ndarray): Input data set (n, m).
@@ -86,17 +83,10 @@ class MultiGauss:
         assert X.shape[0] == self.m, \
             'Use `pdf` for single-point calculations.'
 
-        n = X.shape[1]
+        X_span = np.meshgrid(*X)
+        X_span = np.asarray(X_span)
+        g = self._gauss(X_span, normalize=normalize)
 
-        # Get Gaussian output for each point (rank `self.m` tensor/matrix)
-        g = np.zeros(tuple(repeat(n, times=self.m)))
-        for i, combination in zip(
-                product(range(n), repeat=self.m), product(*X)):
-            x = np.array(combination)
-            g[i] = self._gauss(x, normalize=normalize)
-
-        # Format
-        g = g.T
         if ravel:
             g = g.ravel()
 
@@ -141,7 +131,7 @@ class MultiGauss:
                     # Use means of other dimensions for projection
                     x[j] = self.mu[j]
 
-            g[i] = self._gauss(x, normalize=normalize)
+            g[i] = self._gauss_single(x, normalize=normalize)
 
         # Format
         g = g.T
@@ -150,12 +140,27 @@ class MultiGauss:
 
         return g
 
-    def _gauss(self, x, normalize):
+    def _gauss_single(self, x, normalize):
         """Calculate multivariate Gaussian PDF at a single point."""
         x_mu = x.T - self.mu
 
         arg = np.matmul(self.cov_inv, x_mu)
         arg = np.matmul(x_mu.T, arg)
+        f = np.exp(-0.5 * arg)
+
+        if normalize:
+            f /= self.norm
+
+        return f
+
+    def _gauss(self, x, normalize):
+        """Calculate multivariate Gaussian PDF for entire array."""
+        mu_shape = [self.m] + list(repeat(1, self.m))
+        x_mu = x - self.mu.reshape(mu_shape)
+
+        arg = np.tensordot(self.cov_inv, x_mu, axes=1)
+        arg = np.sum(x_mu * arg, axis=0)
+
         f = np.exp(-0.5 * arg)
 
         if normalize:

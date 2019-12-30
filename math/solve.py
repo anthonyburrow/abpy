@@ -1,21 +1,33 @@
-def NewtonMethod(func, args, var_index, set_value=0, eps=0.0001,
-                 init_dx=1):
-    x0, x1 = (0, init_dx)
-    new_args = args[:]
-    new_args.insert(var_index, x0)
-    f0 = func(*new_args) - set_value
-    while True:
-        new_args = args[:]
-        new_args.insert(var_index, x1)
-        f1 = func(*new_args) - set_value
+def newton(func, eps=0.00001, *args, **kwargs):
+    """Calculate root using Newton's method.
 
-        if abs(f1) < eps:
-            return x1
+    Finds the closest root to 0; does not return multiple roots.
 
+    Args:
+        func: Function set to zero. Must have input as first parameter.
+        eps (float): Accuracy/limit for appoximation.
+
+    Returns:
+        x0 (float): Root of the function.
+
+    """
+    x0, x1 = (0, 0.1)
+    f0 = func(0, *args, **kwargs)
+
+    max_iter = 1000
+    count = 0
+
+    while count < max_iter:
+        if abs(f0) < eps:
+            return x0
+
+        f1 = func(x1, *args, **kwargs)
         fprime = (f1 - f0) / (x1 - x0)
 
         x0 = x1
         x1 = x1 - (f1 / fprime)
         f0 = f1
 
-    return x1
+        count += 1
+
+    return x0
