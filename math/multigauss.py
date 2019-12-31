@@ -99,7 +99,7 @@ class MultiGauss:
         of each other dimension. Usually just used for plotting 2D contours.
 
         Args:
-            X (numpy.ndarray): Input data set (n, m).
+            X (numpy.ndarray): Input data set (n, 2).
             which (tuple): Which indices of the MultiGauss object correlate to the
                            slice
             normalize (bool): Normalize the PDF.
@@ -126,9 +126,9 @@ class MultiGauss:
             x = np.zeros(self.m)
             for j in range(self.m):
                 if j in which:
-                    x[which[j]] = combination[j]
+                    x[j] = combination[which.index(j)]
                 else:
-                    # Use means of other dimensions for projection
+                    # Use mean of other dimensions for projection
                     x[j] = self.mu[j]
 
             g[i] = self._gauss_single(x, normalize=normalize)

@@ -1,6 +1,7 @@
 from numpy import exp, log
-from combinatorics import factorial, combination
-from misc import lgamma
+
+from .misc import lgamma
+from .combinatorics import factorial, combination
 
 
 class binomial:

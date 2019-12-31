@@ -12,7 +12,8 @@ class GPR:
 
     """
 
-    def __init__(self, X, Y, eY=None, ls=300, var=0.001, noise=0.01, verbose=True):
+    def __init__(self, X, Y, eY=None, ls=300, var=0.001, noise=0.01, verbose=True,
+                 optimize_noise=False):
         """Create optimized model.
 
         Args:
