@@ -4,7 +4,7 @@ import numpy as np
 def integrate(X, y, *args, **kwargs):
     """Integrate function.
 
-    Defaults to
+    Defaults to constant dx.
 
     Args:
         X (tuple, numpy.ndarray): Bounds of integral or input space.
