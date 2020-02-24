@@ -8,10 +8,10 @@ def integrate(X, y, *args, **kwargs):
 
     Args:
         X (tuple, numpy.ndarray): Bounds of integral or input space.
-        func: Function or output array.
+        y: Function or output array.
 
     Returns:
-        integral (float): Definte integral value.
+        integral (float): Definite integral value.
 
     """
     n = len(X)

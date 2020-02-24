@@ -2,11 +2,11 @@ import numpy as np
 from mypytools.math.multigauss import MultiGauss
 
 
-con_colors = ['#404040', '#7a7a7a', '#dbdbdb', 'k']
+con_colors = ['#bdbdbd', '#595959', '#1f1f1f', 'k']
 
 
 def draw_contours(
-        axis, gmm, xbounds, ybounds, which=(0, 1), con_density=100, alpha=0.7):
+        axis, gmm, xbounds, ybounds, which=(0, 1), con_density=400, alpha=0.7):
     """Draw 2D (filled) contours on axis with 1-, 2-, 3-sigma levels"""
     assert len(which) == 2
 
@@ -32,7 +32,9 @@ def draw_contours(
             z_level = gauss.pdf(sig_point)
             z_levels.append(z_level)
         z_levels = list(reversed(z_levels))
-        z_levels.append(1)
+        z_levels.append(1.1)
 
-        axis.contourf(con0, con1, z_con, levels=z_levels, colors=con_colors,
-                      alpha=alpha, antialiased=True)
+        for j in range(3):
+            axis.contourf(con0, con1, z_con, levels=[z_levels[j], 1.1],
+                          colors=[con_colors[j], 'k'], alpha=alpha,
+                          antialiased=True, zorder=j - 3)

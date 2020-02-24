@@ -9,11 +9,8 @@ def gamma(z):
 
 
 def lgamma(n):
-    """Log-Gamma function."""
+    """Log-Gamma approximation for large `n`."""
     from numpy import log, pi
 
-    if isinstance(n, int) and n <= 13:
-        return log(gamma(n))
-    else:
-        lg = (n - 0.5) * log(n) - n + 0.5 * log(2 * pi)
-        return lg
+    lg = (n - 0.5) * log(n) - n + 0.5 * log(2 * pi)
+    return lg
