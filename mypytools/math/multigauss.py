@@ -46,6 +46,10 @@ class MultiGauss:
             g (numpy.ndarray): The array of PDF values (n, ).
 
         """
+        # Single-point calculation
+        if isinstance(X, float) or isinstance(X, int):
+            return self._gauss_single(X, normalize=normalize)
+
         X = np.asarray(X)
 
         # Single-point calculation

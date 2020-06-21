@@ -35,6 +35,6 @@ def draw_contours(
         z_levels.append(1.1)
 
         for j in range(3):
-            axis.contourf(con0, con1, z_con, levels=[z_levels[j], 1.1],
+            axis.contourf(con0, con1, z_con, levels=[z_levels[j], 1.5],
                           colors=[con_colors[j], 'k'], alpha=alpha,
                           antialiased=True, zorder=j - 3)
