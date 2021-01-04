@@ -52,7 +52,6 @@ class MultiGauss:
 
         X = np.asarray(X)
 
-        # Single-point calculation
         if len(X.shape) == 1:
             assert X.shape[0] == self.m, \
                 '`X` data point must be of dimension %i' % self.m

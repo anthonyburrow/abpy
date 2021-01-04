@@ -8,8 +8,10 @@ class binomial:
 
     @staticmethod
     def pdf(k: int, n: int, p: float) -> float:
-        f = combination(n, k) * \
-            p**k * (1 - p)**(n - k)
+        if k == 0:
+            return (1 - p)**n
+
+        f = combination(n, k) * p**k * (1 - p)**(n - k)
 
         return f
 

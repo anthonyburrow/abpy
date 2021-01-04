@@ -12,8 +12,8 @@ class GPR:
 
     """
 
-    def __init__(self, X, Y, eY=None, ls=300, var=0.001, noise=0.01, verbose=True,
-                 optimize_noise=False):
+    def __init__(self, X, y, ey=None, ls=1., var=0.001, noise=0.01,
+                 verbose=False, optimize_noise=False, optimizer='bfgs'):
         """Create optimized model.
 
         Args:
@@ -29,27 +29,28 @@ class GPR:
         self.verbose = verbose
 
         # Check for uncertainties
-        if eY is not None and np.any(eY):
+        model_uncertainty = False
+        if ey is not None and np.any(ey):
             model_uncertainty = True
         else:
-            model_uncertainty = False
             optimize_noise = True
-            self._report('No uncertainty detected - optimizing noise parameter.')
+            msg = ('No uncertainty detected - optimizing noise parameter.')
+            self._report(msg)
 
         # Create kernel
         self.kernel = GPy.kern.Matern32(1, lengthscale=ls, variance=var)
 
+        kern = self.kernel
         if model_uncertainty:
-            kern_uncertainty = GPy.kern.Fixed(1, np.diag(eY**2))
-            kern = self.kernel + kern_uncertainty
-            self._report('Uncertainty added to GPy kernel')
-        else:
-            kern = self.kernel
+            kern_uncertainty = GPy.kern.Fixed(1, np.diag(ey**2))
+            kern += kern_uncertainty
+
+            msg = 'Uncertainty added to GPy kernel'
+            self._report(msg)
 
         # Create model
-        self._report('Creating model...')
         self.model = GPy.models.GPRegression(
-            X.reshape(-1, 1), Y.reshape(-1, 1), kern)
+            X[:, np.newaxis], y[:, np.newaxis], kern)
         self.model['Gaussian.noise.variance'][0] = noise
 
         # Optimize model
@@ -60,10 +61,10 @@ class GPR:
             self.model.Gaussian_noise.fix(1e-6)
 
         t0 = time.time()
-        self.model.optimize(optimizer='bfgs')
+        self.model.optimize(optimizer=optimizer)
 
-        self._report('Optimised in %.2f s.' % (time.time() - t0))
-        self._report(self.model)
+        msg = f'Optimised in {time.time() - t0:.2f} s.'
+        self._report(msg)
 
         if model_uncertainty:
             # Use optimized hyperparameters with original kernel
@@ -90,9 +91,7 @@ class GPR:
         mean, var = self.model.predict(
             X_pred.reshape(-1, 1), kern=self.kernel.copy())
 
-        self._report('Predicted in %.2f s.\n' % (time.time() - t0))
+        msg = f'Predicted in {time.time() - t0:.2f} s.'
+        self._report(msg)
 
-        mean = mean.squeeze()
-        var = var.squeeze()
-
-        return mean, var
+        return mean.squeeze(), var.squeeze()
