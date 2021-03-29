@@ -3,15 +3,15 @@ import pickle
 
 class StateManager:
 
-    def __init__(self, manager_name: str, path: str='./'):
+    def __init__(self, name: str, path: str='./'):
         """Create state manager.
 
         Args:
-            manager_name (str): Name of manager and state file.
+            name (str): Name of manager and state file.
             path (str): Path to place file.
 
         """
-        self.filename = f'{path}{manager_name}.p'
+        self.filename = f'{path}{name}.p'
 
         self._state = {}
         try:
