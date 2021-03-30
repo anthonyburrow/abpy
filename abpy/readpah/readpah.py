@@ -17,8 +17,7 @@ _model_sym = ('He', 'C', 'O', 'Ne', 'Mg', 'Si',
 
 _neglect = ('H', 'He')
 
-_H_frac = 0.7381
-_H_mass = 1.0079
+_zero = 1e-70
 
 
 def read_atomic_mass(file):
@@ -28,6 +27,19 @@ def read_atomic_mass(file):
     atomic_mass = {}
 
     for _ in range(89):
+        line = file.readline().split(',')
+
+        mass = float(line[2].replace(" ", ''))
+
+        symbol = line[3]
+        symbol = symbol.replace(" ", '')
+        symbol = symbol.replace("'", '')
+
+        atomic_mass[symbol] = mass
+
+    file.readline()
+
+    for _ in range(22):
         line = file.readline().split(',')
 
         mass = float(line[2].replace(" ", ''))
@@ -62,14 +74,13 @@ def read_sol(file, atomic_mass):
         try:
             mass = atomic_mass[symbol]
         except KeyError:
+            print(symbol)
             continue
 
         abund = float(line[3][:-1])
         mass_frac = abund_to_n_frac(abund, mass)
 
         sol_abund.append(mass_frac)
-        if symbol == 'H':
-            continue
         _sym_to_ind[symbol] = count
         count += 1
 
@@ -109,9 +120,10 @@ def get_adjusted(model_filename, sol_frac):
         i = _sym_to_ind[elem]
         adjusted_data[:, i] = model[elem]
 
-    sol_abund[_sym_to_ind['He'] + 1] = 0   # Set the He correction to 0
+    sol_abund[_sym_to_ind['H']] = _zero   # Set the H correction to 0
+    sol_abund[_sym_to_ind['He']] = _zero   # Set the He correction to 0
 
-    adjusted_data += sol_frac * sol_abund[_sym_to_ind['He'] + 1:]
+    adjusted_data += sol_frac * sol_abund
 
     ni56 = model['Ni']
 
@@ -123,7 +135,7 @@ def get_adjusted(model_filename, sol_frac):
     return adjusted_data, ni56
 
 
-def plot(data, ni56, v, sol_frac, out_dir='.'):
+def make_plot(data, ni56, v, sol_frac, out_dir='.'):
     fig, ax = plt.subplots(figsize=(5, 3), dpi=200)
 
     for elem in _model_sym:
@@ -153,3 +165,65 @@ def plot(data, ni56, v, sol_frac, out_dir='.'):
     fig.savefig(fn, format='png', dpi=200)
 
     plt.close('all')
+
+
+def get_zmass(m_int):
+    zmass = np.zeros_like(m_int)
+
+    zmass[0] = m_int[0]   # Assuming m_int starts at 1st boundary
+    zmass[1:] = m_int[1:] - m_int[:-1]
+
+    # Ensure it's normalized
+    norm = zmass.sum() / m_int[-1]
+    zmass /= norm
+
+    return zmass
+
+
+def gen_file(out_file, m_int, vel, adjusted_data, unstable_Ni):
+    zmass = get_zmass(m_int)
+
+    nmesh = len(vel)
+    for i in range(nmesh):
+        line = '%03i %.16E %.16E\n' % (i, vel[i], zmass[i])
+        out_file.write(line)
+
+    for i in range(nmesh):
+        block = ''
+
+        for j in range(0, len(_sym_to_ind), 6):
+            vals = tuple(adjusted_data[i, j:j + 5])
+
+            block += '%03i %.16E %.16E %.16E %.16E %.16E' % (i, *vals)
+
+            if j != 78:
+                block += ' %.16E' % adjusted_data[i, j + 5]
+
+            block += '\n'
+
+        # Radioactives
+        block += '%03i %.16E %.16E %.16E %.16E %.16E %.16E\n' \
+                  % (i, unstable_Ni[i], _zero, _zero, _zero, _zero, _zero)
+
+        out_file.write(block)
+
+
+def gen_model(in_filename, sol_frac, out_dir='.', plot=True):
+    # Input
+    mass_vel = np.loadtxt(in_filename, skiprows=2, usecols=(0, 2))
+    m_int = mass_vel[:, 0]
+    vel = mass_vel[:, 1]
+
+    adjusted_data, unstable_Ni = get_adjusted(in_filename, sol_frac)
+
+    # Output
+    basename = '.'.join(in_filename.split('.')[:-1])
+    out_filename = '%s/%s.model' % (out_dir, basename)
+
+    with open(out_filename, 'w+') as out_file:
+        gen_file(out_file, m_int, vel, adjusted_data, unstable_Ni)
+
+    if not plot:
+        return
+
+    make_plot(adjusted_data, unstable_Ni, vel, sol_frac, out_dir=out_dir)

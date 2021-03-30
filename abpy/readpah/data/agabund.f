@@ -296,7 +296,7 @@ c
      &,   8800, 226,      'Ra', 'Radium'
      &,   8900, 227,      'Ac', 'Actinium'/
       data (el_code(i),elmass(i),elsymbol(i),elname(i), i=90,z_max)/
-     &    9000, 232.0381, 'Th', 'Thorium'
+     &,   9000, 232.0381, 'Th', 'Thorium'
      &,   9100, 231.0359, 'Pa', 'Protactinium'
      &,   9200, 238.0289, ' U', 'Uranium'
      &,   9300, 237,      'Np', 'Neptunium'
