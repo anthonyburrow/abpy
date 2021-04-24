@@ -211,6 +211,9 @@ def gen_file(out_file, m_int, vel, adjusted_data, unstable_Ni):
 def gen_model(in_filename, sol_frac, out_dir='.', plot=True):
     # Input
     mass_vel = np.loadtxt(in_filename, skiprows=2, usecols=(0, 2))
+    zero_mask = mass_vel == 0
+    mass_vel[zero_mask] = _zero
+
     m_int = mass_vel[:, 0]
     vel = mass_vel[:, 1]
 
