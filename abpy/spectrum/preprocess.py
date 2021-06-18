@@ -1,14 +1,21 @@
 import numpy as np
 from ..astro.redshift import correct_redshift
+from snpy.utils.deredden import unred
 
 
-def preprocess_SNe(data, z=None, wave_range=None):
+_MW_RV = 3.1
+
+
+def preprocess_SNe(data, z=None, eBV=None, wave_range=None):
     '''
     `data` formatted by:
         data[: 0] -> wavelength
         data[: 1] -> flux
         data[: 2] -> flux_err
     '''
+    # Get rid of NaN values
+    data = data[~np.isnan(data).any(axis=1)]
+
     # Put wavelength in rest frame
     data[:, 0] = correct_redshift(data[:, 0], z)
 
@@ -23,5 +30,6 @@ def preprocess_SNe(data, z=None, wave_range=None):
         data[:, 1] -= min_flux
 
     # deredden flux
+    # data[:, 1], _0, _1 = unred(data[:, 0], data[:, 1], eBV, _MW_RV)
 
     return data
