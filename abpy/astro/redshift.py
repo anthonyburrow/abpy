@@ -5,6 +5,6 @@ def correct_redshift(array, z):
     Array could be wavelength, epoch, etc.
     '''
     if z is None:
-        return
+        return array
 
     return array / (z + 1.)

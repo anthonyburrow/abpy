@@ -1,9 +1,10 @@
+import numpy as np
 from os.path import splitext
 from astropy.io import fits
 
 
 def read_spectrum(filename):
-    root, ext = splitext(filename)
+    _, ext = splitext(filename)
 
     if ext == '.dat':
         data = np.loadtxt(filename)
