@@ -18,6 +18,7 @@ _model_sym = ('He', 'C', 'O', 'Ne', 'Mg', 'Si',
 _neglect = ('H', 'He')
 
 _zero = 1e-70
+_msol = 1.989e33   # grams
 
 
 def read_atomic_mass(file):
@@ -177,13 +178,45 @@ def get_zmass(m_int):
     norm = zmass.sum() / m_int[-1]
     zmass /= norm
 
-    return zmass
+    # Return zmass
+    return zmass * _msol
+
+
+def interpolate_vel(m_int, v0, v1, m0, m1):
+    slope = (v1 - v0) / (m1 - m0)
+    return slope * (m_int - m0) + v0
+
+
+def make_monotonic(vel, m_int):
+    n_zones = len(vel)
+    for i in range(1, n_zones):
+        adjustment = 1.
+        if vel[i] == vel[i - 1]:
+            vel[i] = vel[i] + adjustment
+            continue
+        if vel[i] > vel[i - 1]:
+            continue
+        # Get index j of the next one that is greater/equal in the sequence
+        j = i + 1
+        while j < n_zones - 1:
+            if vel[j] >= vel[i - 1]:
+                break
+            j += 1
+        
+        # Fit all between (i-1) and j with linear interpolation of vel v. m_int
+        if vel[i - 1] == vel[j]:
+            vel[j] = vel[j] + adjustment * 3.
+        v0, v1 = vel[i - 1], vel[j]
+        m0, m1 = m_int[i - 1], m_int[j]
+        vel[i:j] = interpolate_vel(m_int[i:j], v0, v1, m0, m1)
 
 
 def gen_file(out_file, m_int, vel, adjusted_data, unstable_Ni):
     zmass = get_zmass(m_int)
 
     nmesh = len(vel)
+    out_file.write('%03i\n' % nmesh)
+
     for i in range(nmesh):
         line = '%03i %.16E %.16E\n' % (i, vel[i], zmass[i])
         out_file.write(line)
@@ -216,6 +249,7 @@ def gen_model(in_filename, sol_frac, out_dir='.', plot=True):
 
     m_int = mass_vel[:, 0]
     vel = mass_vel[:, 1]
+    make_monotonic(vel, m_int)
 
     adjusted_data, unstable_Ni = get_adjusted(in_filename, sol_frac)
 
