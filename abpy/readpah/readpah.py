@@ -18,6 +18,7 @@ _model_sym = ('He', 'C', 'O', 'Ne', 'Mg', 'Si',
 _neglect = ('H', 'He')
 
 _zero = 1e-70
+_msol = 1.989e33   # grams
 
 
 def read_atomic_mass(file):
@@ -128,14 +129,14 @@ def get_adjusted(model_filename, sol_frac):
     ni56 = model['Ni']
 
     # Normalize
-    norm = adjusted_data.sum(axis=1) + ni56
+    norm = adjusted_data.sum(axis=1) + ni56 + 5. * _zero
     adjusted_data = (adjusted_data.T / norm).T
     ni56 /= norm
 
     return adjusted_data, ni56
 
 
-def make_plot(data, ni56, v, sol_frac, out_dir='.'):
+def make_comp_plot(data, ni56, v, sol_frac, out_dir='.'):
     fig, ax = plt.subplots(figsize=(5, 3), dpi=200)
 
     for elem in _model_sym:
@@ -177,15 +178,71 @@ def get_zmass(m_int):
     norm = zmass.sum() / m_int[-1]
     zmass /= norm
 
-    return zmass
+    # Return zmass
+    return zmass * _msol
+
+
+def interpolate_vel(m_int, v0, v1, m0, m1):
+    slope = (v1 - v0) / (m1 - m0)
+    return slope * (m_int - m0) + v0
+
+
+def make_monotonic(vel, m_int):
+    n_zones = len(vel)
+    for i in range(1, n_zones):
+        adjustment = 1.
+        if vel[i] == vel[i - 1]:
+            vel[i] = vel[i] + adjustment
+            continue
+        if vel[i] > vel[i - 1]:
+            continue
+        # Get index j of the next one that is greater/equal in the sequence
+        j = i + 1
+        while j < n_zones - 1:
+            if vel[j] >= vel[i - 1]:
+                break
+            j += 1
+        
+        # Fit all between (i-1) and j with linear interpolation of vel v. m_int
+        if vel[i - 1] == vel[j]:
+            vel[j] = vel[j] + adjustment * 3.
+        v0, v1 = vel[i - 1], vel[j]
+        m0, m1 = m_int[i - 1], m_int[j]
+        vel[i:j] = interpolate_vel(m_int[i:j], v0, v1, m0, m1)
+
+
+def make_vel_plot(m_int, vel, sol_frac, out_dir='.'):
+    fig, ax = plt.subplots(figsize=(5, 3), dpi=200)
+
+    ax.plot(m_int, vel)
+
+    ax.set_xlabel('interior mass')
+    ax.set_ylabel('velocity')
+
+    # ax.legend(frameon=False, bbox_to_anchor=(1.04, 1), loc='upper left',
+    #           fontsize=9)
+
+    plt.tight_layout()
+
+    # Save image
+    fig_dir = '%s%sfigs' % (out_dir, _sep)
+    if not os.path.exists(fig_dir):
+        os.makedirs(fig_dir)
+
+    fn = '%s%svel_m_int-%.3e.png' % (fig_dir, _sep, sol_frac)
+    fig.savefig(fn, format='png', dpi=200)
+
+    plt.close('all')
 
 
 def gen_file(out_file, m_int, vel, adjusted_data, unstable_Ni):
     zmass = get_zmass(m_int)
 
     nmesh = len(vel)
+    out_file.write('%3s\n' % nmesh)
+
     for i in range(nmesh):
-        line = '%03i %.16E %.16E\n' % (i, vel[i], zmass[i])
+        line = '%3s %.16E %.16E\n' % (i + 1, vel[i], zmass[i])
         out_file.write(line)
 
     for i in range(nmesh):
@@ -194,7 +251,7 @@ def gen_file(out_file, m_int, vel, adjusted_data, unstable_Ni):
         for j in range(0, len(_sym_to_ind), 6):
             vals = tuple(adjusted_data[i, j:j + 5])
 
-            block += '%03i %.16E %.16E %.16E %.16E %.16E' % (i, *vals)
+            block += '%3s %.16E %.16E %.16E %.16E %.16E' % (i + 1, *vals)
 
             if j != 78:
                 block += ' %.16E' % adjusted_data[i, j + 5]
@@ -202,8 +259,8 @@ def gen_file(out_file, m_int, vel, adjusted_data, unstable_Ni):
             block += '\n'
 
         # Radioactives
-        block += '%03i %.16E %.16E %.16E %.16E %.16E %.16E\n' \
-                  % (i, unstable_Ni[i], _zero, _zero, _zero, _zero, _zero)
+        block += '%3s %.16E %.16E %.16E %.16E %.16E %.16E\n' \
+                  % (i + 1, unstable_Ni[i], _zero, _zero, _zero, _zero, _zero)
 
         out_file.write(block)
 
@@ -212,10 +269,15 @@ def gen_model(in_filename, sol_frac, out_dir='.', plot=True):
     # Input
     mass_vel = np.loadtxt(in_filename, skiprows=2, usecols=(0, 2))
     zero_mask = mass_vel == 0
-    mass_vel[zero_mask] = _zero
+    mass_vel[zero_mask] = _zero    
 
     m_int = mass_vel[:, 0]
     vel = mass_vel[:, 1]
+
+    # Fix first velocity (can't be zero)
+    vel[0] = vel[1] - (m_int[1] - m_int[0]) * ((vel[2] - vel[1]) / (m_int[2] - m_int[1]))
+
+    make_monotonic(vel, m_int)
 
     adjusted_data, unstable_Ni = get_adjusted(in_filename, sol_frac)
 
@@ -229,4 +291,5 @@ def gen_model(in_filename, sol_frac, out_dir='.', plot=True):
     if not plot:
         return
 
-    make_plot(adjusted_data, unstable_Ni, vel, sol_frac, out_dir=out_dir)
+    make_vel_plot(m_int, vel, sol_frac, out_dir=out_dir)
+    make_comp_plot(adjusted_data, unstable_Ni, vel, sol_frac, out_dir=out_dir)
