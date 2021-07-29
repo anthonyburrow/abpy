@@ -268,14 +268,11 @@ def gen_file(out_file, m_int, vel, adjusted_data, unstable_Ni):
 def gen_model(in_filename, sol_frac, out_dir='.', plot=True):
     # Input
     mass_vel = np.loadtxt(in_filename, skiprows=2, usecols=(0, 2))
-    zero_mask = mass_vel == 0
-    mass_vel[zero_mask] = _zero    
+    zero_mask = mass_vel[:, 1] == 0.
+    mass_vel[zero_mask, 1] = 1.e6
 
     m_int = mass_vel[:, 0]
     vel = mass_vel[:, 1]
-
-    # Fix first velocity (can't be zero)
-    vel[0] = vel[1] - (m_int[1] - m_int[0]) * ((vel[2] - vel[1]) / (m_int[2] - m_int[1]))
 
     make_monotonic(vel, m_int)
 
