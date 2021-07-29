@@ -1,5 +1,5 @@
 
-def correct_redshift(array, z):
+def deredshift(array, z):
     ''' Put some array into rest frame.
 
     Array could be wavelength, epoch, etc.
