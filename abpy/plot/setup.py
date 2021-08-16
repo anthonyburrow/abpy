@@ -11,7 +11,9 @@ def paper_plot():
 
     # Axes and Ticks
     tick_fontsize = 12
-    label_fontsize = 14
+    tick_major_length = 5
+    tick_minor_length = 2.5
+    label_fontsize = 13
 
     mpl.rcParams['axes.labelsize'] = label_fontsize
 
@@ -20,31 +22,36 @@ def paper_plot():
     mpl.rcParams['xtick.major.top'] = True
     mpl.rcParams['xtick.minor.top'] = True
     mpl.rcParams['xtick.labelsize'] = tick_fontsize
+    mpl.rcParams['xtick.major.size'] = tick_major_length
+    mpl.rcParams['xtick.minor.size'] = tick_minor_length
 
     mpl.rcParams['ytick.direction'] = 'in'
     mpl.rcParams['ytick.right'] = True
     mpl.rcParams['ytick.major.right'] = True
     mpl.rcParams['ytick.minor.right'] = True
     mpl.rcParams['ytick.labelsize'] = tick_fontsize
+    mpl.rcParams['ytick.major.size'] = tick_major_length
+    mpl.rcParams['ytick.minor.size'] = tick_minor_length
 
     # Markers and Lines
     mpl.rcParams['scatter.marker'] = 'o'
 
     mpl.rcParams['lines.linewidth'] = 1
     mpl.rcParams['lines.markersize'] = 3.5
+    mpl.rcParams['lines.markeredgewidth'] = 1
+
+    mpl.rcParams['errorbar.capsize'] = 1.5
 
     colors = [
-        'k',
+        '#212121',
         'tab:blue',
         'tab:orange'
     ]
     mpl.rcParams['axes.prop_cycle'] = cycler(color=colors)
 
-    mpl.rcParams['errorbar.capsize'] = 2
-
     # Legend
     mpl.rcParams['legend.frameon'] = False
-    mpl.rcParams['legend.fontsize'] = label_fontsize
+    mpl.rcParams['legend.fontsize'] = label_fontsize - 1
 
     # Fonts
     mpl.rcParams['font.family'] = 'serif'
