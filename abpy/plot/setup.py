@@ -7,7 +7,7 @@ def paper_plot():
     # Figure
     mpl.rcParams['figure.figsize'] = (6.4, 4.8)
     mpl.rcParams['figure.dpi'] = 400
-    mpl.rcParams['figure.autolayout'] = True
+    mpl.rcParams['figure.autolayout'] = False
 
     # Axes and Ticks
     tick_fontsize = 12
