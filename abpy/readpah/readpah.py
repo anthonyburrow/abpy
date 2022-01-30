@@ -265,7 +265,7 @@ def gen_file(out_file, m_int, vel, adjusted_data, unstable_Ni):
         out_file.write(block)
 
 
-def gen_model(in_filename, sol_frac, out_dir='.', plot=True):
+def gen_model(in_filename, out_filename, sol_frac, out_dir='.', plot=True):
     # Input
     mass_vel = np.loadtxt(in_filename, skiprows=2, usecols=(0, 2))
     zero_mask = mass_vel[:, 1] == 0.
@@ -279,8 +279,7 @@ def gen_model(in_filename, sol_frac, out_dir='.', plot=True):
     adjusted_data, unstable_Ni = get_adjusted(in_filename, sol_frac)
 
     # Output
-    basename = '.'.join(in_filename.split('.')[:-1])
-    out_filename = '%s/%s.model' % (out_dir, basename)
+    out_filename = '%s/%s' % (out_dir, out_filename)
 
     with open(out_filename, 'w+') as out_file:
         gen_file(out_file, m_int, vel, adjusted_data, unstable_Ni)
