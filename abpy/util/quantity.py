@@ -19,7 +19,8 @@ unit_equivalencies = {
     'erg/s': ('power', 1e-7),
     'T': ('magnetic field', 1.),
     'G': ('magnetic field', 1e-5),
-    'F': ('capacitance', 1.)
+    'F': ('capacitance', 1.),
+    'K': ('temperature', 1.),
 }
 
 
@@ -52,26 +53,30 @@ class Unit:
     def copy(self):
         new_units = Unit()
 
-        new_units._unit_dict = self._unit_dict.copy()
+        new_unit_dict = {}
+        for unit_type, unit_group in self._unit_dict.items():
+            new_unit_dict[unit_type] = unit_group.copy()
+
+        new_units._unit_dict = new_unit_dict
 
         return new_units
 
     def __add__(self, x):
         assert self._unit_dict == x._unit_dict
 
-        return self
+        return self.copy()
 
     def __mul__(self, x):
         assert isinstance(x, Unit)
 
         if not x._unit_dict:
-            return self
+            return self.copy()
 
         new_units = self.copy()
 
         for unit_type, x_unit_group in x._unit_dict.items():
             if unit_type not in new_units._unit_dict:
-                new_units._unit_dict[unit_type] = x_unit_group
+                new_units._unit_dict[unit_type] = x_unit_group.copy()
                 continue
 
             unit_group = new_units._unit_dict[unit_type]
@@ -82,7 +87,7 @@ class Unit:
 
                 unit_group[unit] += multiple
 
-        self._clear_zero_factors()
+        new_units._clear_zero_factors()
 
         return new_units
 
@@ -97,7 +102,7 @@ class Unit:
 
         for unit_type, x_unit_group in x._unit_dict.items():
             if unit_type not in self._unit_dict:
-                self._unit_dict[unit_type] = x_unit_group
+                self._unit_dict[unit_type] = x_unit_group.copy()
                 continue
 
             unit_group = self._unit_dict[unit_type]
@@ -121,7 +126,7 @@ class Unit:
     def __pow__(self, x):
         new_units = self.copy()
 
-        for unit_group in self._unit_dict.values():
+        for unit_group in new_units._unit_dict.values():
             for unit in unit_group:
                 unit_group[unit] *= x
 
@@ -181,30 +186,40 @@ class Quantity():
 
     def __add__(self, x):
         if not isinstance(x, Quantity):
-            self.value += float(x)
-            return self
+            new_quantity = Quantity(self.value + float(x))
+            new_quantity.units = self.units.copy()
 
-        assert self.units == x.units
+            return new_quantity
 
         new_quantity = Quantity(self.value + x.value)
-        new_quantity.units = self.units.copy()
+        new_quantity.units = self.units + x.units
 
         return new_quantity
 
+    def __radd__(self, x):
+        return self.__add__(x)
+
     def __mul__(self, x):
         if not isinstance(x, Quantity):
-            self.value *= float(x)
-            return self
+            new_quantity = Quantity(self.value * float(x))
+            new_quantity.units = self.units.copy()
+
+            return new_quantity
 
         new_quantity = Quantity(self.value * x.value)
         new_quantity.units = self.units * x.units
 
         return new_quantity
 
+    def __rmul__(self, x):
+        return self.__mul__(x)
+
     def __truediv__(self, x):
         if not isinstance(x, Quantity):
-            self.value /= float(x)
-            return self
+            new_quantity = Quantity(self.value / float(x))
+            new_quantity.units = self.units.copy()
+
+            return new_quantity
 
         new_quantity = Quantity(self.value / x.value)
         new_quantity.units = self.units / x.units
@@ -213,8 +228,10 @@ class Quantity():
 
     def __rtruediv__(self, x):
         if not isinstance(x, Quantity):
-            self.value = float(x) / self.value
-            return self
+            new_quantity = Quantity(float(x) / self.value)
+            new_quantity.units = self.units.copy()
+
+            return new_quantity
 
         new_quantity = Quantity(x.value / self.value)
         new_quantity.units = x.units / self.units
@@ -256,6 +273,4 @@ class Quantity():
 
 if __name__ == '__main__':
     h_bar = Quantity(1.054571817e-34, {'J': 1., 's': 1.})
-    print(h_bar)
-    h_bar = h_bar.to('eV', 's')
-    print(h_bar)
+    c = Quantity(2.99792458e8, {'m': 1., 's': -1.})
