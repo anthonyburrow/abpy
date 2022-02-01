@@ -1,4 +1,3 @@
-from numpy import pi
 from abpy.util.quantity import Quantity
 
 
@@ -13,4 +12,5 @@ a_0 = Quantity(5.29177210903e-11, {'m': 1.})
 e = Quantity(1.602176634e-19, {'C': 1.})
 m_e = Quantity(9.1093837015e-31, {'kg': 1.})
 m_p = Quantity(1.67262192369e-27, {'kg': 1.})
-alpha = e**2 / (4. * pi * epsilon_0 * h_bar * c)
+m_n = Quantity(1.67492749804e-27, {'kg': 1.})
+alpha = Quantity(0.0072973525693)

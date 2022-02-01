@@ -229,7 +229,7 @@ class Quantity():
     def __rtruediv__(self, x):
         if not isinstance(x, Quantity):
             new_quantity = Quantity(float(x) / self.value)
-            new_quantity.units = self.units.copy()
+            new_quantity.units = x.units / self.units
 
             return new_quantity
 
@@ -241,6 +241,12 @@ class Quantity():
     def __pow__(self, x):
         new_quantity = Quantity(self.value**x)
         new_quantity.units = self.units**x
+
+        return new_quantity
+
+    def __neg__(self):
+        new_quantity = Quantity(-self.value)
+        new_quantity.units = self.units.copy()
 
         return new_quantity
 
