@@ -136,7 +136,14 @@ class Unit:
         return self._unit_dict == x._unit_dict
 
     def __str__(self):
-        return str(self._unit_dict)
+        unit_str_list = [
+            f'{unit}^{multiple}' if multiple > 0. else f'{unit}^{{{multiple}}}'
+            for unit_type, unit_group in self._unit_dict.items()
+            for unit, multiple in unit_group.items()
+        ]
+        s = ' '.join(unit_str_list)
+
+        return s
 
     def _clear_zero_factors(self):
         for unit_type in list(self._unit_dict):
@@ -251,7 +258,10 @@ class Quantity():
         return new_quantity
 
     def __str__(self):
-        return str(self.value) + '   ' + str(self.units)
+        return f'{self.value}   {self.units}'
+
+    def __format__(self, format_spec):
+        return '{:{}}   {}'.format(self.value, format_spec, self.units)
 
     def to(self, *desired_units):
         if desired_units[0].lower() == 'si':
