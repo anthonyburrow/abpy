@@ -1,7 +1,7 @@
 
 
 # Units and factors from SI units
-unit_equivalencies = {
+unit_conversions = {
     'km': ('distance', 1e3),
     'm': ('distance', 1.),
     'cm': ('distance', 1e-2),
@@ -23,6 +23,11 @@ unit_equivalencies = {
     'K': ('temperature', 1.),
 }
 
+unit_equivalencies = {
+    'J': {'charge': ('C', 2.), 'capacitance': ('F', -1.)},
+    'J': {'mass': ('kg', 1.), 'distance': ('m', 2.), 'time': ('s', -2.)}
+}
+
 
 class Unit:
 
@@ -33,12 +38,12 @@ class Unit:
             multiple = 1.
 
         if unit is not None:
-            if unit not in unit_equivalencies:
+            if unit not in unit_conversions:
                 print(f'Warning: {unit} not a valid unit.')
-            unit_type = unit_equivalencies[unit][0]
+            unit_type = unit_conversions[unit][0]
             self._unit_dict[unit_type] = {unit: multiple}
 
-    def get_conversion(self, *desired_units: tuple):
+    def get_conversion(self, *desired_units: tuple, simplify=True):
         factor = 1.
         new_units = self.copy()
 
@@ -48,7 +53,43 @@ class Unit:
             factor *= _factor
             new_units *= _new_units
 
+        if simplify:
+            new_units.simplify()
+
         return factor, new_units
+
+    def simplify(self):
+        for new_unit, new_unit_equivs in unit_equivalencies.items():
+            # Check if unit types exist in Unit
+            unit_types = new_unit_equivs.keys()
+            if not all(unit_type in self._unit_dict for unit_type in unit_types):
+                continue
+
+            # Check if the specific units from equivalencies are in Unit
+            if not all(unit_group[0] in self._unit_dict[unit_type]
+                       for unit_type, unit_group in new_unit_equivs.items()):
+                continue
+
+            # Check if there are enough multiples of each unit within Unit
+            if not all(unit_group[1] < self._unit_dict[unit_type][unit_group[0]]
+                       for unit_type, unit_group in new_unit_equivs.items()):
+                continue
+
+            # Check for the maximum number of unit exchanges to perform
+            # (This is limited to integer multiples)
+            new_unit_multiple = None
+            for unit_type, unit_group in new_unit_equivs.items():
+                unit, multiple = unit_group
+                total_multiple = self._unit_dict[unit_type][unit]
+                if multiple is not None:
+                    new_unit_multiple = min(new_unit_multiple,
+                                            total_multiple // multiple)
+
+            # Rescale the units
+            conversion = Unit(new_unit, new_unit_multiple)
+            for unit, multiple in new_unit_equivs.values():
+                conversion /= Unit(unit, multiple)
+            self *= conversion
 
     def copy(self):
         new_units = Unit()
@@ -91,9 +132,6 @@ class Unit:
 
         return new_units
 
-    # def __rmul__(self, x):
-    #     return self.__mul__(x)
-
     def __imul__(self, x):
         assert isinstance(x, Unit)
 
@@ -118,10 +156,15 @@ class Unit:
         return self
 
     def __truediv__(self, x):
-        return self * x**(-1.)
+        new_units = self.copy()
+        new_units *= x**(-1.)
 
-    # def __rtruediv__(self, x):
-    #     return self**(-1.) * x
+        return new_units
+
+    def __itruediv__(self, x):
+        self *= x**(-1.)
+
+        return self
 
     def __pow__(self, x):
         new_units = self.copy()
@@ -155,28 +198,28 @@ class Unit:
                 self._unit_dict.pop(unit_type, None)
 
     def _get_single_conversion(self, desired_unit: str):
-        if desired_unit not in unit_equivalencies:
-            print(f'Warning: {desired_unit} not a valid unit.')
-            return 1.
-
-        unit_type = unit_equivalencies[desired_unit][0]
-        if unit_type not in self._unit_dict:
-            print(f'Warning: Cannot convert to {desired_unit}')
-            return 1.
-
         factor = 1.
         new_units = Unit()
+
+        if desired_unit not in unit_conversions:
+            print(f'Warning: {desired_unit} not a valid unit.')
+            return factor, new_units
+
+        unit_type = unit_conversions[desired_unit][0]
+        if unit_type not in self._unit_dict:
+            print(f'Warning: Cannot convert to {desired_unit}')
+            return factor, new_units
+
         for unit, multiple in self._unit_dict[unit_type].items():
             if unit == desired_unit:
                 continue
 
-            new_scale = unit_equivalencies[desired_unit][1]
-            old_scale = unit_equivalencies[unit][1]
+            new_scale = unit_conversions[desired_unit][1]
+            old_scale = unit_conversions[unit][1]
             # This seems backwards because of the values I use
-            # in `unit_equivalencies`
+            # in `unit_conversions`
             factor *= (old_scale / new_scale)**multiple
-
-            new_units *= Unit(desired_unit) / Unit(unit)
+            new_units *= (Unit(desired_unit) / Unit(unit))**multiple
 
         return factor, new_units
 
@@ -236,7 +279,7 @@ class Quantity():
     def __rtruediv__(self, x):
         if not isinstance(x, Quantity):
             new_quantity = Quantity(float(x) / self.value)
-            new_quantity.units = x.units / self.units
+            new_quantity.units = self.units.copy()
 
             return new_quantity
 
@@ -279,9 +322,8 @@ class Quantity():
 
     def _to_specific(self, *desired_units):
         factor, new_units = self.units.get_conversion(*desired_units)
-        new_value = self.value * factor
 
-        new_quantity = Quantity(new_value)
+        new_quantity = Quantity(self.value * factor)
         new_quantity.units = new_units
 
         return new_quantity
