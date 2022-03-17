@@ -249,6 +249,12 @@ class Quantity():
     def __radd__(self, x):
         return self.__add__(x)
 
+    def __sub__(self, x):
+        return self.__add__(-x)
+
+    def __rsub__(self, x):
+        return (-self).__add__(x)
+
     def __mul__(self, x):
         if not isinstance(x, Quantity):
             new_quantity = Quantity(self.value * float(x))
