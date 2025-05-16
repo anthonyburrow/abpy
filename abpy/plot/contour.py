@@ -1,5 +1,5 @@
 import numpy as np
-from mypytools.math.multigauss import MultiGauss
+from abpy.math.multigauss import MultiGauss
 
 
 con_colors = ['#bdbdbd', '#595959', '#1f1f1f', 'k']
